@@ -1,82 +1,236 @@
 import streamlit as st
 import pandas as pd
+import plotly.express as px
+from datetime import date
+import os
 
-st.set_page_config(page_title="Keuangan Pribadi", page_icon="💰")
+st.set_page_config(
+    page_title="Keuangan Pribadi",
+    page_icon="💰",
+    layout="wide"
+)
 
-st.title("💰 Aplikasi Keuangan Pribadi")
+DATA_FILE = "data.csv"
 
-if "data" not in st.session_state:
-    st.session_state.data = []
-
-with st.form("form_keuangan"):
-    jenis = st.selectbox(
-        "Jenis Transaksi",
-        ["Pemasukan", "Pengeluaran"]
+# Membuat file CSV jika belum ada
+if not os.path.exists(DATA_FILE):
+    df_awal = pd.DataFrame(
+        columns=[
+            "Tanggal",
+            "Jenis",
+            "Kategori",
+            "Nominal",
+            "Keterangan"
+        ]
     )
+    df_awal.to_csv(DATA_FILE, index=False)
 
-    keterangan = st.text_input("Keterangan")
+# Membaca data
+df = pd.read_csv(DATA_FILE)
 
-    nominal = st.number_input(
-        "Nominal",
-        min_value=0
-    )
+# Sidebar
+menu = st.sidebar.radio(
+    "📌 Menu",
+    [
+        "Dashboard",
+        "Tambah Transaksi",
+        "Riwayat",
+        "Analisis",
+        "Target Tabungan"
+    ]
+)
 
-    submit = st.form_submit_button("Simpan")
+# ================= DASHBOARD =================
 
-    if submit:
-        st.session_state.data.append({
-            "Jenis": jenis,
-            "Keterangan": keterangan,
-            "Nominal": nominal
-        })
+if menu == "Dashboard":
 
-df = pd.DataFrame(st.session_state.data)
+    st.title("💰 Dashboard Keuangan Pribadi")
 
-if not df.empty:
-
-    total_pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
-
-    total_pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
-
-    saldo = total_pemasukan - total_pengeluaran
+    pemasukan = df[df["Jenis"] == "Pemasukan"]["Nominal"].sum()
+    pengeluaran = df[df["Jenis"] == "Pengeluaran"]["Nominal"].sum()
+    saldo = pemasukan - pengeluaran
 
     col1, col2, col3 = st.columns(3)
 
-    with col1:
-        st.metric(
-            "Total Pemasukan",
-            f"Rp {total_pemasukan:,.0f}"
+    col1.metric(
+        "💵 Total Pemasukan",
+        f"Rp {pemasukan:,.0f}"
+    )
+
+    col2.metric(
+        "📉 Total Pengeluaran",
+        f"Rp {pengeluaran:,.0f}"
+    )
+
+    col3.metric(
+        "💰 Saldo Saat Ini",
+        f"Rp {saldo:,.0f}"
+    )
+
+    st.subheader("📋 Transaksi Terbaru")
+    st.dataframe(df.tail(10), use_container_width=True)
+
+# ================= TAMBAH TRANSAKSI =================
+
+elif menu == "Tambah Transaksi":
+
+    st.title("➕ Tambah Transaksi")
+
+    with st.form("form_transaksi"):
+
+        tanggal = st.date_input(
+            "Tanggal",
+            date.today()
         )
 
-    with col2:
-        st.metric(
-            "Total Pengeluaran",
-            f"Rp {total_pengeluaran:,.0f}"
+        jenis = st.selectbox(
+            "Jenis",
+            ["Pemasukan", "Pengeluaran"]
         )
 
-    with col3:
-        st.metric(
-            "Saldo Saat Ini",
-            f"Rp {saldo:,.0f}"
+        kategori = st.selectbox(
+            "Kategori",
+            [
+                "Gaji",
+                "Makan & Minum",
+                "Transportasi",
+                "Belanja",
+                "Hiburan",
+                "Pendidikan",
+                "Tagihan",
+                "Lainnya"
+            ]
         )
 
-    st.subheader("📋 Riwayat Transaksi")
-    st.dataframe(df, use_container_width=True)
+        nominal = st.number_input(
+            "Nominal",
+            min_value=0
+        )
 
-    st.subheader("📊 Grafik Keuangan")
+        keterangan = st.text_input(
+            "Keterangan"
+        )
 
-    grafik = pd.DataFrame({
-        "Jumlah": [
-            total_pemasukan,
-            total_pengeluaran
+        simpan = st.form_submit_button(
+            "💾 Simpan"
+        )
+
+        if simpan:
+
+            data_baru = {
+                "Tanggal": tanggal,
+                "Jenis": jenis,
+                "Kategori": kategori,
+                "Nominal": nominal,
+                "Keterangan": keterangan
+            }
+
+            df = pd.concat(
+                [df, pd.DataFrame([data_baru])],
+                ignore_index=True
+            )
+
+            df.to_csv(DATA_FILE, index=False)
+
+            st.success(
+                "Transaksi berhasil disimpan!"
+            )
+
+# ================= RIWAYAT =================
+
+elif menu == "Riwayat":
+
+    st.title("📋 Riwayat Transaksi")
+
+    cari = st.text_input(
+        "Cari Keterangan"
+    )
+
+    tampil = df.copy()
+
+    if cari:
+        tampil = tampil[
+            tampil["Keterangan"]
+            .astype(str)
+            .str.contains(cari, case=False)
         ]
-    },
-    index=[
-        "Pemasukan",
-        "Pengeluaran"
-    ])
 
-    st.bar_chart(grafik)
+    st.dataframe(
+        tampil,
+        use_container_width=True
+    )
 
-else:
-    st.info("Belum ada transaksi.")
+# ================= ANALISIS =================
+
+elif menu == "Analisis":
+
+    st.title("📊 Analisis Keuangan")
+
+    pemasukan = df[df["Jenis"] == "Pemasukan"]["Nominal"].sum()
+    pengeluaran = df[df["Jenis"] == "Pengeluaran"]["Nominal"].sum()
+
+    grafik1 = pd.DataFrame({
+        "Jenis": ["Pemasukan", "Pengeluaran"],
+        "Jumlah": [pemasukan, pengeluaran]
+    })
+
+    fig1 = px.bar(
+        grafik1,
+        x="Jenis",
+        y="Jumlah",
+        title="Perbandingan Pemasukan dan Pengeluaran"
+    )
+
+    st.plotly_chart(
+        fig1,
+        use_container_width=True
+    )
+
+    pengeluaran_df = df[
+        df["Jenis"] == "Pengeluaran"
+    ]
+
+    if not pengeluaran_df.empty:
+
+        fig2 = px.pie(
+            pengeluaran_df,
+            names="Kategori",
+            values="Nominal",
+            title="Kategori Pengeluaran"
+        )
+
+        st.plotly_chart(
+            fig2,
+            use_container_width=True
+        )
+
+# ================= TARGET =================
+
+elif menu == "Target Tabungan":
+
+    st.title("🎯 Target Tabungan")
+
+    pemasukan = df[df["Jenis"] == "Pemasukan"]["Nominal"].sum()
+    pengeluaran = df[df["Jenis"] == "Pengeluaran"]["Nominal"].sum()
+
+    saldo = pemasukan - pengeluaran
+
+    target = st.number_input(
+        "Masukkan Target Tabungan",
+        min_value=1
+    )
+
+    progress = min(
+        saldo / target,
+        1.0
+    )
+
+    st.progress(progress)
+
+    st.write(
+        f"Progress Tabungan: {progress*100:.1f}%"
+    )
+
+    st.write(
+        f"Saldo Saat Ini: Rp {saldo:,.0f}"
+    )
