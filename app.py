@@ -1,12 +1,12 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from datetime import date
 import os
+from datetime import date
 
 st.set_page_config(
-    page_title="Finance Tracker Pro",
-    page_icon="💰",
+    page_title="Pink Finance Tracker",
+    page_icon="🌸",
     layout="wide"
 )
 
@@ -15,43 +15,34 @@ st.set_page_config(
 st.markdown("""
 <style>
 
-.main{
-    background-color:#f5f7fa;
+.stApp{
+background: linear-gradient(135deg,#FFE4EC,#FFF0F5);
 }
 
-.block-container{
-    padding-top:1rem;
+section[data-testid="stSidebar"]{
+background:#FFB6C1;
 }
 
 .card{
-    background:white;
-    padding:20px;
-    border-radius:15px;
-    box-shadow:0 4px 12px rgba(0,0,0,0.1);
-    text-align:center;
+background:white;
+padding:20px;
+border-radius:20px;
+box-shadow:0px 5px 15px rgba(0,0,0,0.1);
+text-align:center;
 }
 
-.card-title{
-    color:gray;
-    font-size:16px;
-}
-
-.card-value{
-    font-size:28px;
-    font-weight:bold;
-    color:#0f766e;
-}
-
-.title{
-    text-align:center;
-    font-size:42px;
-    font-weight:bold;
+.bigtitle{
+text-align:center;
+font-size:45px;
+font-weight:bold;
+color:#d63384;
 }
 
 .subtitle{
-    text-align:center;
-    color:gray;
-    margin-bottom:25px;
+text-align:center;
+color:#666;
+font-size:18px;
+margin-bottom:20px;
 }
 
 </style>
@@ -67,51 +58,50 @@ if not os.path.exists(FILE):
         "Jenis",
         "Kategori",
         "Nominal",
-        "Keterangan"
+        "Catatan"
     ]).to_csv(FILE,index=False)
 
 df = pd.read_csv(FILE)
 
 # ================= SIDEBAR =================
 
-st.sidebar.image(
-    "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
-    width=100
-)
-
-st.sidebar.title("💰 Finance Tracker")
+st.sidebar.title("🌸 Pink Finance")
 
 menu = st.sidebar.radio(
-    "Navigasi",
+    "Menu",
     [
-        "Dashboard",
-        "Tambah Transaksi",
-        "Riwayat",
-        "Analisis",
-        "Target Keuangan",
-        "Laporan"
+        "🏠 Dashboard",
+        "💸 Tambah Transaksi",
+        "📋 Riwayat",
+        "📊 Laporan Bulanan",
+        "🥧 Analisis",
+        "🎯 Target Tabungan",
+        "💡 Insight"
     ]
 )
 
+# ================= HITUNG =================
+
+saldo_awal = 1000000
+
+pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
+
+pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
+
+saldo_akhir = saldo_awal + pemasukan - pengeluaran
+
 # ================= DASHBOARD =================
 
-if menu == "Dashboard":
-
-    pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
-    pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
-
-    saldo_awal = 1000000
-
-    saldo_akhir = saldo_awal + pemasukan - pengeluaran
+if menu == "🏠 Dashboard":
 
     st.markdown(
-        "<div class='title'>💰 Finance Tracker Pro</div>",
-        unsafe_allow_html=True
+    "<div class='bigtitle'>🌸 Pink Finance Tracker</div>",
+    unsafe_allow_html=True
     )
 
     st.markdown(
-        "<div class='subtitle'>Kelola Keuangan Pribadi Dengan Mudah</div>",
-        unsafe_allow_html=True
+    "<div class='subtitle'>Kelola Keuangan Harian dan Bulanan</div>",
+    unsafe_allow_html=True
     )
 
     c1,c2,c3,c4 = st.columns(4)
@@ -119,123 +109,82 @@ if menu == "Dashboard":
     with c1:
         st.markdown(f"""
         <div class='card'>
-        <div class='card-title'>💵 Saldo Awal</div>
-        <div class='card-value'>Rp {saldo_awal:,.0f}</div>
+        <h4>💰 Saldo Awal</h4>
+        <h2>Rp {saldo_awal:,.0f}</h2>
         </div>
         """,unsafe_allow_html=True)
 
     with c2:
         st.markdown(f"""
         <div class='card'>
-        <div class='card-title'>📈 Pemasukan</div>
-        <div class='card-value'>Rp {pemasukan:,.0f}</div>
+        <h4>📈 Pemasukan</h4>
+        <h2>Rp {pemasukan:,.0f}</h2>
         </div>
         """,unsafe_allow_html=True)
 
     with c3:
         st.markdown(f"""
         <div class='card'>
-        <div class='card-title'>📉 Pengeluaran</div>
-        <div class='card-value'>Rp {pengeluaran:,.0f}</div>
+        <h4>📉 Pengeluaran</h4>
+        <h2>Rp {pengeluaran:,.0f}</h2>
         </div>
         """,unsafe_allow_html=True)
 
     with c4:
         st.markdown(f"""
         <div class='card'>
-        <div class='card-title'>💰 Saldo Akhir</div>
-        <div class='card-value'>Rp {saldo_akhir:,.0f}</div>
+        <h4>💖 Saldo Akhir</h4>
+        <h2>Rp {saldo_akhir:,.0f}</h2>
         </div>
         """,unsafe_allow_html=True)
 
     st.markdown("---")
 
-    col1,col2 = st.columns(2)
+    st.subheader("📊 Ringkasan Keuangan")
 
-    with col1:
+    chart = pd.DataFrame({
+        "Jenis":["Pemasukan","Pengeluaran"],
+        "Jumlah":[pemasukan,pengeluaran]
+    })
 
-        grafik = pd.DataFrame({
-            "Jenis":["Pemasukan","Pengeluaran"],
-            "Jumlah":[pemasukan,pengeluaran]
-        })
+    fig = px.bar(
+        chart,
+        x="Jenis",
+        y="Jumlah",
+        text_auto=True
+    )
 
-        fig = px.bar(
-            grafik,
-            x="Jenis",
-            y="Jumlah",
-            title="Perbandingan Pemasukan dan Pengeluaran"
-        )
+    st.plotly_chart(fig,use_container_width=True)
 
-        st.plotly_chart(
-            fig,
-            use_container_width=True
-        )
+# ================= TRANSAKSI =================
 
-    with col2:
+elif menu == "💸 Tambah Transaksi":
 
-        pengeluaran_df = df[
-            df["Jenis"]=="Pengeluaran"
-        ]
+    st.title("💸 Tambah Transaksi")
 
-        if not pengeluaran_df.empty:
-
-            pie = px.pie(
-                pengeluaran_df,
-                names="Kategori",
-                values="Nominal",
-                title="Kategori Pengeluaran"
-            )
-
-            st.plotly_chart(
-                pie,
-                use_container_width=True
-            )
-
-    st.markdown("### 💡 Insight Keuangan")
-
-    if pengeluaran > pemasukan:
-        st.error(
-            "⚠ Pengeluaran lebih besar dari pemasukan."
-        )
-    else:
-        st.success(
-            "✅ Kondisi keuangan masih sehat."
-        )
-
-# ================= TAMBAH =================
-
-elif menu == "Tambah Transaksi":
-
-    st.title("➕ Tambah Transaksi")
-
-    with st.form("form"):
+    with st.form("form_keuangan"):
 
         tanggal = st.date_input(
             "Tanggal",
             date.today()
         )
 
-        jenis = st.selectbox(
-            "Jenis Transaksi",
-            [
-                "Pemasukan",
-                "Pengeluaran"
-            ]
+        jenis = st.radio(
+            "Jenis",
+            ["Pemasukan","Pengeluaran"]
         )
 
         kategori = st.selectbox(
             "Kategori",
             [
-                "Gaji",
-                "Bonus",
-                "Makan",
-                "Transportasi",
-                "Belanja",
-                "Tagihan",
-                "Hiburan",
-                "Pendidikan",
-                "Kesehatan",
-                "Lainnya"
+                "💼 Gaji",
+                "🍔 Makan",
+                "🛍 Belanja",
+                "🚌 Transportasi",
+                "🎮 Hiburan",
+                "📚 Pendidikan",
+                "💡 Tagihan",
+                "🏥 Kesehatan"
             ]
         )
 
@@ -244,168 +193,127 @@ elif menu == "Tambah Transaksi":
             min_value=0
         )
 
-        ket = st.text_area(
-            "Keterangan"
+        catatan = st.text_area(
+            "Catatan"
         )
 
-        submit = st.form_submit_button(
-            "💾 Simpan"
+        simpan = st.form_submit_button(
+            "💖 Simpan Transaksi"
         )
 
-        if submit:
+        if simpan:
 
-            baru = {
+            data_baru = {
                 "Tanggal":tanggal,
                 "Jenis":jenis,
                 "Kategori":kategori,
                 "Nominal":nominal,
-                "Keterangan":ket
+                "Catatan":catatan
             }
 
             df = pd.concat(
-                [df,pd.DataFrame([baru])],
+                [df,pd.DataFrame([data_baru])],
                 ignore_index=True
             )
 
-            df.to_csv(
-                FILE,
-                index=False
-            )
+            df.to_csv(FILE,index=False)
 
-            st.success(
-                "Transaksi berhasil ditambahkan"
-            )
+            st.success("Data berhasil disimpan 🌸")
 
 # ================= RIWAYAT =================
 
-elif menu == "Riwayat":
+elif menu == "📋 Riwayat":
 
     st.title("📋 Riwayat Transaksi")
 
-    cari = st.text_input(
-        "Cari Transaksi"
-    )
-
-    tampil = df.copy()
-
-    if cari:
-        tampil = tampil[
-            tampil["Keterangan"]
-            .astype(str)
-            .str.contains(
-                cari,
-                case=False
-            )
-        ]
-
     st.dataframe(
-        tampil,
+        df,
         use_container_width=True
     )
 
+# ================= LAPORAN =================
+
+elif menu == "📊 Laporan Bulanan":
+
+    st.title("📊 Laporan Bulanan")
+
+    st.info(f"""
+    Total Pemasukan Bulan Ini : Rp {pemasukan:,.0f}
+
+    Total Pengeluaran Bulan Ini : Rp {pengeluaran:,.0f}
+
+    Sisa Uang Bulan Ini : Rp {saldo_akhir:,.0f}
+    """)
+
 # ================= ANALISIS =================
 
-elif menu == "Analisis":
+elif menu == "🥧 Analisis":
 
-    st.title("📊 Analisis Keuangan")
+    st.title("🥧 Analisis Pengeluaran")
 
-    if not df.empty:
+    data_pengeluaran = df[
+        df["Jenis"]=="Pengeluaran"
+    ]
 
-        df["Tanggal"] = pd.to_datetime(
-            df["Tanggal"]
-        )
+    if not data_pengeluaran.empty:
 
-        df["Bulan"] = (
-            df["Tanggal"]
-            .dt.strftime("%Y-%m")
-        )
-
-        bulanan = (
-            df.groupby("Bulan")["Nominal"]
-            .sum()
-            .reset_index()
-        )
-
-        fig = px.line(
-            bulanan,
-            x="Bulan",
-            y="Nominal",
-            markers=True,
-            title="Tren Keuangan"
+        pie = px.pie(
+            data_pengeluaran,
+            names="Kategori",
+            values="Nominal",
+            hole=0.4
         )
 
         st.plotly_chart(
-            fig,
+            pie,
             use_container_width=True
+        )
+
+    else:
+        st.warning(
+            "Belum ada data pengeluaran"
         )
 
 # ================= TARGET =================
 
-elif menu == "Target Keuangan":
+elif menu == "🎯 Target Tabungan":
 
     st.title("🎯 Target Tabungan")
 
-    pemasukan = df[
-        df["Jenis"]=="Pemasukan"
-    ]["Nominal"].sum()
-
-    pengeluaran = df[
-        df["Jenis"]=="Pengeluaran"
-    ]["Nominal"].sum()
-
-    saldo = pemasukan - pengeluaran
-
     target = st.number_input(
-        "Target Tabungan",
+        "Masukkan Target Tabungan",
         min_value=1
     )
 
     progress = min(
-        saldo/target,
+        saldo_akhir/target,
         1.0
     )
 
     st.progress(progress)
 
-    st.write(
-        f"Progress : {progress*100:.1f}%"
+    st.success(
+        f"Progress {progress*100:.1f}%"
     )
 
-    st.write(
-        f"Saldo Saat Ini : Rp {saldo:,.0f}"
-    )
+# ================= INSIGHT =================
 
-# ================= LAPORAN =================
+elif menu == "💡 Insight":
 
-elif menu == "Laporan":
+    st.title("💡 Insight Keuangan")
 
-    st.title("📄 Laporan Keuangan")
+    if pengeluaran > pemasukan:
 
-    pemasukan = df[
-        df["Jenis"]=="Pemasukan"
-    ]["Nominal"].sum()
+        st.error(
+        "⚠ Pengeluaran lebih besar daripada pemasukan."
+        )
 
-    pengeluaran = df[
-        df["Jenis"]=="Pengeluaran"
-    ]["Nominal"].sum()
+    else:
 
-    saldo = pemasukan - pengeluaran
+        st.success(
+        "✅ Kondisi keuangan sehat."
+        )
 
-    st.write(
-        f"Total Pemasukan : Rp {pemasukan:,.0f}"
-    )
-
-    st.write(
-        f"Total Pengeluaran : Rp {pengeluaran:,.0f}"
-    )
-
-    st.write(
-        f"Saldo Akhir : Rp {saldo:,.0f}"
-    )
-
-    st.download_button(
-        label="⬇ Download CSV",
-        data=df.to_csv(index=False),
-        file_name="laporan_keuangan.csv",
-        mime="text/csv"
+    st.info(
+    f"💖 Saldo saat ini Rp {saldo_akhir:,.0f}"
     )
