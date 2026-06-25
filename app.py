@@ -2,51 +2,50 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
-from datetime import date
+from datetime import datetime
 
-# =========================
-# CONFIG
-# =========================
+# ==========================
+# KONFIGURASI
+# ==========================
 
 st.set_page_config(
-    page_title="My Finance Tracker",
-    page_icon="💖",
+    page_title="Blue Finance Tracker",
+    page_icon="💰",
     layout="wide"
 )
 
-# =========================
-# CSS
-# =========================
+# ==========================
+# CSS BIRU MODERN
+# ==========================
 
 st.markdown("""
 <style>
 
 .stApp{
-background: linear-gradient(135deg,#ffe5ec,#fff5f8,#ffffff);
+    background: linear-gradient(135deg,#eaf4ff,#f5f9ff);
 }
 
 section[data-testid="stSidebar"]{
-background: linear-gradient(180deg,#ff8fb1,#ffb6c1);
+    background: linear-gradient(180deg,#1565C0,#42A5F5);
 }
 
 h1,h2,h3{
-color:#d63384;
+    color:#1565C0;
 }
 
-.card{
-background:white;
-padding:20px;
-border-radius:20px;
-box-shadow:0 4px 15px rgba(0,0,0,0.1);
-text-align:center;
+[data-testid="stMetric"]{
+    background:white;
+    padding:15px;
+    border-radius:15px;
+    box-shadow:0px 3px 10px rgba(0,0,0,0.1);
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# =========================
-# FILE DATABASE
-# =========================
+# ==========================
+# DATABASE CSV
+# ==========================
 
 FILE = "keuangan.csv"
 
@@ -62,29 +61,11 @@ if not os.path.exists(FILE):
 
 df = pd.read_csv(FILE)
 
-# =========================
-# PERHITUNGAN
-# =========================
-
-if len(df) == 0:
-    pemasukan = 0
-    pengeluaran = 0
-else:
-    pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
-    pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
-
-sisa_uang = pemasukan - pengeluaran
-
-makan = df[df["Kategori"].astype(str).str.contains("Makan",na=False)]["Nominal"].sum()
-minum = df[df["Kategori"].astype(str).str.contains("Minum",na=False)]["Nominal"].sum()
-belanja = df[df["Kategori"].astype(str).str.contains("Belanja",na=False)]["Nominal"].sum()
-transportasi = df[df["Kategori"].astype(str).str.contains("Transportasi",na=False)]["Nominal"].sum()
-
-# =========================
+# ==========================
 # SIDEBAR
-# =========================
+# ==========================
 
-st.sidebar.title("💖 Finance Tracker")
+st.sidebar.title("💰 Blue Finance")
 
 menu = st.sidebar.radio(
     "Menu",
@@ -94,23 +75,40 @@ menu = st.sidebar.radio(
         "📋 Riwayat",
         "📊 Laporan Bulanan",
         "📈 Analisis",
-        "🎯 Target Menabung"
+        "🎯 Target Tabungan"
     ]
 )
 
-# =========================
+# ==========================
+# PERHITUNGAN
+# ==========================
+
+if len(df) > 0:
+
+    pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
+
+    pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
+
+else:
+
+    pemasukan = 0
+    pengeluaran = 0
+
+sisa_uang = pemasukan - pengeluaran
+
+# ==========================
 # DASHBOARD
-# =========================
+# ==========================
 
 if menu == "🏠 Dashboard":
 
-    st.title("💖 Dashboard Keuangan")
+    st.title("💰 Dashboard Keuangan")
 
     c1,c2,c3 = st.columns(3)
 
     with c1:
         st.metric(
-            "💰 Total Pemasukan",
+            "💵 Total Pemasukan",
             f"Rp {pemasukan:,.0f}"
         )
 
@@ -122,66 +120,41 @@ if menu == "🏠 Dashboard":
 
     with c3:
         st.metric(
-            "💖 Sisa Uang",
+            "💙 Sisa Uang",
             f"Rp {sisa_uang:,.0f}"
         )
 
     st.markdown("---")
 
-    a,b,c,d = st.columns(4)
+    if len(df) > 0:
 
-    with a:
-        st.info(f"🍔 Makan\n\nRp {makan:,.0f}")
+        chart = pd.DataFrame({
+            "Jenis":["Pemasukan","Pengeluaran"],
+            "Jumlah":[pemasukan,pengeluaran]
+        })
 
-    with b:
-        st.info(f"🥤 Minum\n\nRp {minum:,.0f}")
+        fig = px.bar(
+            chart,
+            x="Jenis",
+            y="Jumlah",
+            text_auto=True,
+            color="Jenis"
+        )
 
-    with c:
-        st.info(f"🛍 Belanja\n\nRp {belanja:,.0f}")
+        st.plotly_chart(
+            fig,
+            use_container_width=True
+        )
 
-    with d:
-        st.info(f"🚗 Transportasi\n\nRp {transportasi:,.0f}")
-
-    st.markdown("---")
-
-    grafik = pd.DataFrame({
-        "Jenis":["Pemasukan","Pengeluaran"],
-        "Jumlah":[pemasukan,pengeluaran]
-    })
-
-    fig = px.bar(
-        grafik,
-        x="Jenis",
-        y="Jumlah",
-        color="Jenis",
-        text_auto=True,
-        title="Perbandingan Pemasukan & Pengeluaran"
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-# =========================
+# ==========================
 # TAMBAH TRANSAKSI
-# =========================
+# ==========================
 
 elif menu == "➕ Tambah Transaksi":
 
     st.title("➕ Tambah Transaksi")
 
-    tanggal = st.date_input(
-        "📅 Tanggal",
-        date.today()
-    )
-
-    periode = st.selectbox(
-        "📆 Periode",
-        [
-            "Harian",
-            "Bulanan"
-        ]
-    )
-
-    jenis = st.radio(
+    jenis = st.selectbox(
         "Jenis Transaksi",
         [
             "Pemasukan",
@@ -189,10 +162,18 @@ elif menu == "➕ Tambah Transaksi":
         ]
     )
 
+    periode = st.selectbox(
+        "Periode",
+        [
+            "Harian",
+            "Bulanan"
+        ]
+    )
+
     if jenis == "Pemasukan":
 
         kategori = st.selectbox(
-            "Kategori Pemasukan",
+            "Kategori",
             [
                 "Gaji",
                 "Bonus",
@@ -206,7 +187,7 @@ elif menu == "➕ Tambah Transaksi":
     else:
 
         kategori = st.selectbox(
-            "Kategori Pengeluaran",
+            "Kategori",
             [
                 "Makan",
                 "Minum",
@@ -223,24 +204,28 @@ elif menu == "➕ Tambah Transaksi":
         )
 
     nominal = st.number_input(
-        "💰 Nominal (Rp)",
+        "Nominal (Rp)",
         min_value=0,
         step=1000
     )
 
     catatan = st.text_area(
-        "📝 Catatan"
+        "Catatan"
     )
 
-    if st.button("💾 Simpan Transaksi"):
+    if st.button("💾 Simpan"):
+
+        tanggal_otomatis = datetime.now().strftime(
+            "%d-%m-%Y %H:%M:%S"
+        )
 
         data_baru = {
-            "Tanggal":tanggal,
-            "Jenis":jenis,
-            "Periode":periode,
-            "Kategori":kategori,
-            "Nominal":nominal,
-            "Catatan":catatan
+            "Tanggal": tanggal_otomatis,
+            "Jenis": jenis,
+            "Periode": periode,
+            "Kategori": kategori,
+            "Nominal": nominal,
+            "Catatan": catatan
         }
 
         df = pd.concat(
@@ -250,43 +235,57 @@ elif menu == "➕ Tambah Transaksi":
 
         df.to_csv(FILE,index=False)
 
-        st.success("✅ Data berhasil disimpan")
+        st.success(
+            "Transaksi berhasil disimpan"
+        )
 
-# =========================
+# ==========================
 # RIWAYAT
-# =========================
+# ==========================
 
 elif menu == "📋 Riwayat":
 
     st.title("📋 Riwayat Transaksi")
 
     if len(df) == 0:
-        st.warning("Belum ada transaksi")
+
+        st.warning(
+            "Belum ada transaksi"
+        )
+
     else:
+
         st.dataframe(
             df,
             use_container_width=True
         )
 
-# =========================
-# LAPORAN
-# =========================
+# ==========================
+# LAPORAN BULANAN
+# ==========================
 
 elif menu == "📊 Laporan Bulanan":
 
-    st.title("📊 Laporan Keuangan")
+    st.title("📊 Laporan Bulanan")
 
-    st.success(f"""
-💰 Total Pemasukan : Rp {pemasukan:,.0f}
+    st.metric(
+        "Total Pemasukan",
+        f"Rp {pemasukan:,.0f}"
+    )
 
-💸 Total Pengeluaran : Rp {pengeluaran:,.0f}
+    st.metric(
+        "Total Pengeluaran",
+        f"Rp {pengeluaran:,.0f}"
+    )
 
-💖 Sisa Uang : Rp {sisa_uang:,.0f}
-""")
+    st.metric(
+        "Sisa Uang",
+        f"Rp {sisa_uang:,.0f}"
+    )
 
-# =========================
+# ==========================
 # ANALISIS
-# =========================
+# ==========================
 
 elif menu == "📈 Analisis":
 
@@ -316,16 +315,16 @@ elif menu == "📈 Analisis":
             "Belum ada data pengeluaran"
         )
 
-# =========================
+# ==========================
 # TARGET TABUNGAN
-# =========================
+# ==========================
 
-elif menu == "🎯 Target Menabung":
+elif menu == "🎯 Target Tabungan":
 
-    st.title("🎯 Target Menabung")
+    st.title("🎯 Target Tabungan")
 
     target = st.number_input(
-        "Masukkan Target Tabungan",
+        "Masukkan Target",
         min_value=1,
         step=100000
     )
@@ -339,8 +338,4 @@ elif menu == "🎯 Target Menabung":
 
     st.success(
         f"Progress : {progress*100:.1f}%"
-    )
-
-    st.info(
-        f"Sisa Uang Saat Ini : Rp {sisa_uang:,.0f}"
     )
