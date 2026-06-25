@@ -1,110 +1,132 @@
-elif menu == "➕ Tambah Transaksi":
+# ================= HITUNG DATA =================
 
-    st.title("💸 Tambah Transaksi")
+if len(df) == 0:
+    pemasukan = 0
+    pengeluaran = 0
+else:
+    pemasukan = df[df["Jenis"]=="Pemasukan"]["Nominal"].sum()
+    pengeluaran = df[df["Jenis"]=="Pengeluaran"]["Nominal"].sum()
 
-    with st.container():
+sisa_uang = pemasukan - pengeluaran
 
-        col1, col2 = st.columns(2)
+# kategori khusus
+makan = df[df["Kategori"].astype(str).str.contains("Makan", na=False)]["Nominal"].sum()
 
-        with col1:
+minum = df[df["Kategori"].astype(str).str.contains("Minum", na=False)]["Nominal"].sum()
 
-            tanggal = st.date_input(
-                "📅 Tanggal",
-                date.today()
-            )
+belanja = df[df["Kategori"].astype(str).str.contains("Belanja", na=False)]["Nominal"].sum()
 
-            jenis = st.selectbox(
-                "🔄 Jenis Transaksi",
-                [
-                    "Pemasukan",
-                    "Pengeluaran"
-                ]
-            )
+transportasi = df[df["Kategori"].astype(str).str.contains("Transportasi", na=False)]["Nominal"].sum()
+if menu == "🏠 Dashboard":
 
-            periode = st.selectbox(
-                "📆 Periode",
-                [
-                    "Harian",
-                    "Bulanan"
-                ]
-            )
+    st.title("💖 Dashboard Keuangan")
 
-        with col2:
+    c1,c2,c3 = st.columns(3)
 
-            metode = st.selectbox(
-                "💳 Metode Pembayaran",
-                [
-                    "Tunai",
-                    "Transfer",
-                    "E-Wallet",
-                    "QRIS",
-                    "Kartu Debit"
-                ]
-            )
-
-            nominal = st.number_input(
-                "💰 Nominal (Rp)",
-                min_value=0,
-                step=1000
-            )
-
-        if jenis == "Pemasukan":
-
-            kategori = st.selectbox(
-                "📈 Kategori Pemasukan",
-                [
-                    "💼 Gaji",
-                    "🎁 Bonus",
-                    "💻 Freelance",
-                    "📈 Investasi",
-                    "🏪 Usaha",
-                    "📦 Lainnya"
-                ]
-            )
-
-        else:
-
-            kategori = st.selectbox(
-                "📉 Kategori Pengeluaran",
-                [
-                    "🍔 Makan & Minum",
-                    "🛒 Belanja",
-                    "🚗 Transportasi",
-                    "🏠 Tagihan Rumah",
-                    "📱 Pulsa & Internet",
-                    "🏥 Kesehatan",
-                    "📚 Pendidikan",
-                    "🎮 Hiburan",
-                    "🎁 Hadiah",
-                    "📦 Lainnya"
-                ]
-            )
-
-        catatan = st.text_area(
-            "📝 Catatan"
+    with c1:
+        st.metric(
+            "💰 Total Pemasukan",
+            f"Rp {pemasukan:,.0f}"
         )
 
-        if st.button("💖 Simpan Transaksi"):
+    with c2:
+        st.metric(
+            "💸 Total Pengeluaran",
+            f"Rp {pengeluaran:,.0f}"
+        )
 
-            data_baru = {
-                "Tanggal": tanggal,
-                "Jenis": jenis,
-                "Periode": periode,
-                "Kategori": kategori,
-                "Metode": metode,
-                "Nominal": nominal,
-                "Catatan": catatan
-            }
+    with c3:
+        st.metric(
+            "💖 Sisa Uang",
+            f"Rp {sisa_uang:,.0f}"
+        )
 
-            df = pd.concat(
-                [df, pd.DataFrame([data_baru])],
-                ignore_index=True
-            )
+    st.markdown("---")
 
-            df.to_csv(FILE, index=False)
+    a,b,c,d = st.columns(4)
 
-            st.success(
-                "✅ Transaksi berhasil disimpan"
-            )
+    with a:
+        st.info(f"🍔 Makan\n\nRp {makan:,.0f}")
 
-            st.rerun()
+    with b:
+        st.info(f"🥤 Minum\n\nRp {minum:,.0f}")
+
+    with c:
+        st.info(f"🛍 Belanja\n\nRp {belanja:,.0f}")
+
+    with d:
+        st.info(f"🚗 Transportasi\n\nRp {transportasi:,.0f}")
+        elif menu == "➕ Tambah Transaksi":
+
+    st.title("➕ Tambah Transaksi")
+
+    tanggal = st.date_input("Tanggal")
+
+    periode = st.selectbox(
+        "Periode",
+        ["Harian","Bulanan"]
+    )
+
+    jenis = st.selectbox(
+        "Jenis",
+        ["Pemasukan","Pengeluaran"]
+    )
+
+    if jenis == "Pemasukan":
+
+        kategori = st.selectbox(
+            "Kategori",
+            [
+                "Gaji",
+                "Bonus",
+                "Freelance",
+                "Investasi",
+                "Lainnya"
+            ]
+        )
+
+    else:
+
+        kategori = st.selectbox(
+            "Kategori",
+            [
+                "Makan",
+                "Minum",
+                "Belanja",
+                "Transportasi",
+                "Tagihan",
+                "Internet",
+                "Kesehatan",
+                "Pendidikan",
+                "Hiburan",
+                "Lainnya"
+            ]
+        )
+
+    nominal = st.number_input(
+        "Nominal (Rp)",
+        min_value=0,
+        step=1000
+    )
+
+    catatan = st.text_area("Catatan")
+
+    if st.button("💾 Simpan"):
+
+        data_baru = {
+            "Tanggal":tanggal,
+            "Jenis":jenis,
+            "Periode":periode,
+            "Kategori":kategori,
+            "Nominal":nominal,
+            "Catatan":catatan
+        }
+
+        df = pd.concat(
+            [df,pd.DataFrame([data_baru])],
+            ignore_index=True
+        )
+
+        df.to_csv(FILE,index=False)
+
+        st.success("Data berhasil disimpan")
